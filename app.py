@@ -1,7 +1,6 @@
 import os
 import streamlit as st
 from PIL import Image
-import clipboard
 from utils.utils import generate_answer, generate_base_prompt, get_azure_client, generate_explanation, test_regex, markdown_test_results
 from streamlit_extras.colored_header import colored_header
 
