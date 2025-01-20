@@ -185,11 +185,16 @@ def main():
                 description="",
                 color_name="violet-70")
             
-            st.session_state.test_text = st.text_input("Enter an example sentence to test the regex", 
-                                                        value=st.session_state.test_text)
+            st.write("Enter an example sentence to test the regex")
+            col_test_text, col_test_button = st.columns([1, 0.2])
+            with col_test_text:
+                st.session_state.test_text = st.text_input("Enter an example sentence to test the regex", 
+                                                            label_visibility="collapsed",
+                                                            value=st.session_state.test_text)
+            with col_test_button:
+                if st.button("Run Test", type="primary"):
+                    st.session_state.show_test_results = True
             
-            if st.button("Run Test", type="primary"):
-                st.session_state.show_test_results = True
             
             # Show test results if button was clicked
             if st.session_state.show_test_results and st.session_state.test_text:
