@@ -19,13 +19,17 @@ def get_azure_client() -> AzureOpenAI:
         azure_endpoint=st.secrets["AZURE"]["AZURE_OPENAI_ENDPOINT"]
     )
     
-    
+
+def unpack_example(examples: List[Tuple[str, str]]) -> str:
+    return "\n".join([f"Example:{example[0]}\nDescription: {example[1]}\n\n" for example in examples])
+
+
 def generate_base_prompt(description: str, examples: str, not_examples: str, example_sentence: str) -> str:
     base_prompt = f"""Can you please help me generate a regular expression for my use-case? 
 I will provide you with:
 - a description of the pattern I want to match (in <description> tags), 
-- some examples of the pattern I want to match (in <examples> tags),
-- some examples of the pattern I don't want to match (in <not_examples> tags),
+- some examples of the pattern I want to match (in <match_examples> tags),
+- some examples of the pattern I don't want to match (in <not_match_examples> tags),
 - and an example sentence that contains both the pattern I want to match and the pattern I don't want to match (in <example_sentence> tags).
 
 Description:
@@ -34,14 +38,14 @@ Description:
 </description>
 
 Examples:
-<examples>
-{examples}
-</examples>
+<match_examples>
+{unpack_example(examples)}
+</match_examples>
 
 Not Examples:
-<not_examples>
-{not_examples}
-</not_examples>
+<not_match_examples>
+{unpack_example(not_examples)}
+</not_match_examples>
 
 Example Sentence:
 <example_sentence>
@@ -90,7 +94,7 @@ def generate_explanation(base_prompt: str, answer: str, client: AzureOpenAI):# -
         top_p=1
     )
     
-    print(explanation.choices[0].message.content)
+    #print(explanation.choices[0].message.content)
     return explanation.choices[0].message.content
 
 
@@ -101,7 +105,7 @@ def test_regex(result_regex: str, test_text: str):
         # Use regex.finditer instead of re.finditer
         return list(regex.finditer(result_regex, test_text))
     except regex.error as e:
-        print(f"Regex error: {e}")  # For debugging
+        #print(f"Regex error: {e}")  # For debugging
         return []
 
 
