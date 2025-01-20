@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 from PIL import Image
 from utils.utils import generate_answer, generate_base_prompt, get_azure_client, generate_explanation, test_regex, markdown_test_results
