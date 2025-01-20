@@ -1,0 +1,16 @@
+# Environment variables
+*.env
+
+# Generated reports
+data/reports/
+
+*.md
+*.json
+# Python
+__pycache__/
+*.py[cod]
+*$py.class 
+*.ipynb
+secrets.toml
+data/
+.streamlit/
