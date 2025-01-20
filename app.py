@@ -130,7 +130,7 @@ def main():
             )
 
             # Update the generate button logic to use all examples
-            if st.button("Generate Regular Expression"):
+            if st.button("Generate Regular Expression", type="primary"):
                 print(pattern_examples)
                 base_prompt = generate_base_prompt(
                     pattern_description,
@@ -144,7 +144,7 @@ def main():
                 st.session_state.show_test_results = False
 
     with output_col:
-        with st.container(border=True):
+        with st.container(border=True, height=500):
             colored_header(
                     label="Results",
                     description="",
@@ -168,7 +168,7 @@ def main():
         st.session_state.test_text = st.text_input("Enter an example sentence to test the regex", 
                                                     value=st.session_state.test_text)
         
-        if st.button("Run Test"):
+        if st.button("Run Test", type="primary"):
             st.session_state.show_test_results = True
         
         # Show test results if button was clicked
