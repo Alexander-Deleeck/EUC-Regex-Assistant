@@ -145,7 +145,8 @@ def main():
         #) 
 
         pattern_example_sentences = st.text_input("Enter an example sentence that contains both the pattern you want to match and the pattern you don't want to match:",
-                                                value=st.session_state.pattern_example_sentences)
+                                                value=st.session_state.pattern_example_sentences,
+                                                placeholder="Eg. We went to the shop. Then we sent the receipt to John-doe@example.com.")
         # Update the generate button logic to use all examples
         if st.button("Generate Regular Expression", type="primary"):
             #print(pattern_examples)
