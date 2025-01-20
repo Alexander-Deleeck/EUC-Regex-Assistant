@@ -15,18 +15,23 @@ from streamlit_extras.colored_header import colored_header
 # Setup Streamlit page config
 st.set_page_config(
     page_title="REGEX-GENERATOR",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="auto",
     page_icon="./logo/sparkle-orange-icon.png"
 )
 
 # Load and display the logo
 image = Image.open("./logo/sparkle-orange-icon.png")
-st.image(image, width=100)
+#st.image(image, width=100)
 
 # App title and introduction
-st.title("Regex Generator💡")
-st.markdown("Generate regular expressions effortlessly with this Regex Generator, simplifying complex pattern queries.")
+
+col_logo, col_title = st.columns([0.1, 0.9])
+with col_logo:
+    st.image(image, width=80)
+with col_title:
+    st.title(":gray[RegEx Generator]")
+#st.markdown("*Generate regular expressions effortlessly via the Regex Generator in natural language*")
 
 # Custom function to style the app
 def style_app():
@@ -34,7 +39,7 @@ def style_app():
     <style>
     .app-header { visibility: hidden; }
     .css-18e3th9 { padding-top: 0; padding-bottom: 0; }
-    .css-1d391kg { padding-top: 1rem; padding-right: 1rem; padding-bottom: 1rem; padding-left: 1rem; }
+    .css-1d391kg { padding-top: 0rem; padding-right: 1rem; padding-bottom: 1rem; padding-left: 1rem; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -43,14 +48,51 @@ def style_app():
 azure_client = get_azure_client()
 
 
-# Define the Streamlit app
-def copy_to_clipboard(text):
-    clipboard.copy(text)
-    st.toast(f"Copied to clipboard: {text}", icon='✅')
+# Add these functions at the top level, before main()
+def init_session_state():
+    if 'pattern_examples' not in st.session_state:
+        st.session_state.pattern_examples = ['']
+    if 'pattern_not_examples' not in st.session_state:
+        st.session_state.pattern_not_examples = ['']
+    if 'pattern_example_sentences' not in st.session_state:
+        st.session_state.pattern_example_sentences = ['']
+
+
+def add_input_field(field_type):
+    st.session_state[field_type].append('')
+
+
+def remove_input_field(field_type, index):
+    st.session_state[field_type].pop(index)
+
+
+def create_input_section(title, field_type):
+    examples = []
+    for i, example in enumerate(st.session_state[field_type]):
+        col1, col2 = st.columns([6, 1])
+        with col1:
+            value = st.text_input(
+                f"{title} #{i+1}" if i > 0 else title,
+                value=example,
+                key=f"{field_type}_{i}"
+            )
+            examples.append(value)
+        with col2:
+            if i > 0:  # Only show remove button for additional fields
+                st.button("🗑️", key=f"del_{field_type}_{i}", 
+                         on_click=remove_input_field,
+                         args=(field_type, i))
+    
+    st.button("Add", key=f"add_{field_type}",
+              on_click=add_input_field,
+              args=(field_type,))
+    
+    return examples
 
 
 def main():
-    # Initialize session state variables if they don't exist
+    # Initialize session state variables
+    init_session_state()
     if 'result_regex' not in st.session_state:
         st.session_state.result_regex = None
     if 'test_text' not in st.session_state:
@@ -58,43 +100,73 @@ def main():
     if 'show_test_results' not in st.session_state:
         st.session_state.show_test_results = False
 
-    # Input field for user to enter the pattern
-    pattern_description = st.text_input("Please describe in detail what you want the regex pattern to match:")
-    pattern_examples = st.text_input("Enter an example of a word that you want the pattern to match:")
-    pattern_not_examples = st.text_input("Enter an example of a word that you don't want the pattern to match:")
-    pattern_example_sentence = st.text_input("Enter an example sentence that contains both the pattern you want to match and the pattern you don't want to match:")
 
-    st.code(r'(?<![.!?]\s)(?<!^)\b[A-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b')
+    input_col, _, output_col = st.columns([1, 0.1, 1])
+    
+    with input_col:
+        with st.container(border=True, height=500):
+            colored_header(
+                    label="Create a Regular Expression",
+                    description="",
+                    color_name="blue-70")
+            
+            # Input field for user to enter the pattern
+            pattern_description = st.text_input("Describe in detail what you want the regex pattern to match:")
+            
+            # Replace the single input fields with our new multi-input sections
+            pattern_examples = create_input_section(
+                "Enter an example of a word that you want the pattern to match:",
+                'pattern_examples'
+            )
+            
+            pattern_not_examples = create_input_section(
+                "Enter an example of a word that you don't want the pattern to match:",
+                'pattern_not_examples'
+            )
+            
+            pattern_example_sentences = create_input_section(
+                "Enter an example sentence that contains both the pattern you want to match and the pattern you don't want to match:",
+                'pattern_example_sentences'
+            )
 
-    if st.button("Generate Regular Expression"):
-        # Generate regular expression using Azure OpenAI
-        base_prompt = generate_base_prompt(pattern_description, pattern_examples, pattern_not_examples, pattern_example_sentence)
-        st.session_state.result_regex = generate_answer(base_prompt, azure_client)
-        st.session_state.explanation = generate_explanation(base_prompt, st.session_state.result_regex, azure_client)
-        st.session_state.show_test_results = False  # Reset test results when generating new regex
+            # Update the generate button logic to use all examples
+            if st.button("Generate Regular Expression"):
+                print(pattern_examples)
+                base_prompt = generate_base_prompt(
+                    pattern_description,
+                    ', '.join(filter(None, pattern_examples)),
+                    ', '.join(filter(None, pattern_not_examples)),
+                    '. '.join(filter(None, pattern_example_sentences))
+                )
+                print(base_prompt)
+                st.session_state.result_regex = generate_answer(base_prompt, azure_client)
+                st.session_state.explanation = generate_explanation(base_prompt, st.session_state.result_regex, azure_client)
+                st.session_state.show_test_results = False
 
+    with output_col:
+        with st.container(border=True):
+            colored_header(
+                    label="Results",
+                    description="",
+                    color_name="red-70")
+            
+            # Display results if we have a regex
+            if st.session_state.result_regex:
+                st.subheader("Generated Regular Expression")
+                st.code(f"\n{st.session_state.result_regex}\n", language="regex")
 
-    # Display results if we have a regex
-    if st.session_state.result_regex:
-        colored_header(
-            label="Generated Regular Expression",
-            description="This is the generated regular expression",
-            color_name="red-70")
-        st.code(f"```\n{st.session_state.result_regex}\n```")
-
-        colored_header(
-            label="Explanation",
-            description="This is the explanation of the regular expression",
-            color_name="violet-70")
-        st.write(st.session_state.explanation)
         
+                st.subheader("Explanation")
+                st.write(st.session_state.explanation)
+        
+    with st.container(border=True):
         colored_header(
             label="Test the Result",
-            description="This is the test results of the regular expression",
+            description="",
             color_name="violet-70")
         
         st.session_state.test_text = st.text_input("Enter an example sentence to test the regex", 
-                                                  value=st.session_state.test_text)
+                                                    value=st.session_state.test_text)
         
         if st.button("Run Test"):
             st.session_state.show_test_results = True
@@ -111,5 +183,5 @@ def main():
 if __name__ == "__main__":
     main()
 
-    with st.expander("ℹ️ - About this App"):
-        st.markdown("""This app harnesses the Azure OpenAI module to streamline regular expression generation, simplifying intricate pattern queries into intuitive prompts for seamless data analysis.""")
+    #with st.expander("ℹ️ - About this App"):
+     #   st.markdown("""This app harnesses the Azure OpenAI module to streamline regular expression generation, simplifying intricate pattern queries into intuitive prompts for seamless data analysis.""")

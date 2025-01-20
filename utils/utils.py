@@ -62,7 +62,7 @@ def generate_answer(base_prompt: str, client: AzureOpenAI):# -> Dict[str, str]:
                 "content": "You are an expert in Regular Expressions. Your only job is to guide me in solving my problem using Regular Expressions. Please provide me with the exact Regular Expression I need for my problem. print nothing but the Regular Expression."},
                 {"role": "user", "content": base_prompt}
             ],
-        temperature=1,
+        temperature=0.5,
         max_tokens=256,
         top_p=1
     )
@@ -85,7 +85,7 @@ def generate_explanation(base_prompt: str, answer: str, client: AzureOpenAI):# -
                     "content": "Showcase the solution and briefly explain the solution to me. Enclose any formulas in ```formula```.",
                 },
             ],
-        temperature=1,
+        temperature=0.5,
         max_tokens=800,
         top_p=1
     )
@@ -112,5 +112,10 @@ def markdown_test_results(test_results: list) -> str:
     
     markdown_results = ""
     for idx, match in enumerate(test_results):
-        markdown_results += f"**Match {idx+1}:**\t{match.group()}\nStart position: {match.start()}\nEnd position: {match.end()}\n\n"
+        markdown_results += f"""    **Match {idx+1}:**    {match.group()}
+Start position: {match.start()}
+End position: {match.end()}
+
+
+"""
     return markdown_results
