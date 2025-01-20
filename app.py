@@ -25,10 +25,10 @@ image = Image.open("./logo/sparkle-orange-icon.png")
 # App title and introduction
 
 col_logo, col_title = st.columns([0.1, 0.9])
-with col_logo:
-    st.image(image, width=80)
-with col_title:
-    st.title(":gray[RegEx Generator]")
+#with col_logo:
+    #st.image(image, width=80)
+#with col_title:
+st.title(":blue[RegEx Generator]")
 #st.markdown("*Generate regular expressions effortlessly via the Regex Generator in natural language*")
 
 # Custom function to style the app
