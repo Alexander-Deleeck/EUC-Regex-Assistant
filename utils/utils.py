@@ -20,54 +20,59 @@ def unpack_example(examples: List[Tuple[str, str]]) -> str:
     return "\n".join([f"Example:{example[0]}\nDescription: {example[1]}\n\n" for example in examples])
 
 
-def generate_base_prompt(description: str, examples: str, not_examples: str, example_sentence: str) -> str:
-    base_prompt = f"""Can you please help me generate a regular expression for my use-case? 
-I will provide you with:
-- a description of the pattern I want to match (in <description> tags), 
-- some examples of the pattern I want to match (in <match_examples> tags),
-- some examples of the pattern I don't want to match (in <not_match_examples> tags),
-- and an example sentence that contains both the pattern I want to match and the pattern I don't want to match (in <example_sentence> tags).
+def generate_base_prompt(description: str, examples: List[Tuple[str, str]], not_examples: List[Tuple[str, str]], 
+                        example_sentence: str, prefix: str, suffix: str, case_sensitive: bool, 
+                        start_para: bool, end_para: bool) -> str:
+    def unpack(examples):
+        return '\n'.join([f"Ex: {ex[0]}\nDesc: {ex[1]}" for ex in examples])
+    
+    return f"""
+Create a regex find and replace pattern with these requirements:
 
-Description:
-<description>
+DESCRIPTION:
 {description}
-</description>
 
-Examples:
-<match_examples>
-{unpack_example(examples)}
-</match_examples>
+MATCH EXAMPLES:
+{unpack(examples)}
 
-Not Examples:
-<not_match_examples>
-{unpack_example(not_examples)}
-</not_match_examples>
+DO NOT MATCH:
+{unpack(not_examples)}
 
-Example Sentence:
-<example_sentence>
+EXAMPLE CONTEXT:
 {example_sentence}
-</example_sentence>
 
+OPTIONS:
+- Prefix: {prefix or 'None'}
+- Suffix: {suffix or 'None'}
+- Case-sensitive: {case_sensitive}
+- Start of paragraph: {start_para}
+- End of paragraph: {end_para}
+
+Provide the find regex and replace pattern separated by '|||'. Use lookbehind/ahead for prefix/suffix if needed.
 """
-    return base_prompt
     
     
-def generate_answer(base_prompt: str, client: AzureOpenAI):# -> Dict[str, str]:
-    """Generate answers for a subsection using LLM"""
-    
+def generate_answer(prompt: str, client: AzureOpenAI) -> str:
     response = client.chat.completions.create(
         model=st.secrets["AZURE"]["AZURE_OPENAI_DEPLOYMENT_NAME"],
         messages=[
-                {"role": "system",
-                "content": "You are an expert in Regular Expressions. Your only job is to guide me in solving my problem using Regular Expressions. Please provide me with the exact Regular Expression I need for my problem. print nothing but the Regular Expression."},
-                {"role": "user", "content": base_prompt}
-            ],
-        temperature=0.5,
-        max_tokens=256,
-        top_p=1
+            {"role": "system", "content": "You are a regex expert. Return find|||replace patterns."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3
     )
-    
     return response.choices[0].message.content
+
+
+def substitute_regex(find: str, replace: str, text: str) -> str:
+    try:
+        return regex.sub(find, replace, text)
+    except:
+        return "Invalid regex"
+
+def substitute_regex_in_file(find: str, replace: str, content: str) -> str:
+    return substitute_regex(find, replace, content)
+
 
 
 def generate_explanation(base_prompt: str, answer: str, client: AzureOpenAI):# -> Dict[str, str]:
