@@ -16,3 +16,4 @@ data/
 .streamlit/
 test.txt
 documentation/RegEx-RuleEditor.pdf
+documentation/*.docx

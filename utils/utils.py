@@ -2,6 +2,8 @@ from typing import Dict, List, Tuple
 from openai import AzureOpenAI
 import streamlit as st
 import regex  # Add this at the top of the file, alongside other imports
+import docx
+import io
 
 
 
@@ -117,3 +119,46 @@ End position: {match.end()}
 
 """
     return markdown_results
+
+def read_file_content(uploaded_file) -> str:
+    """Read content from uploaded .txt or .docx file"""
+    if uploaded_file is None:
+        return ""
+    
+    file_type = uploaded_file.type
+    try:
+        if file_type == "text/plain":
+            return uploaded_file.getvalue().decode("utf-8")
+        elif file_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            doc = docx.Document(io.BytesIO(uploaded_file.getvalue()))
+            return "\n".join([paragraph.text for paragraph in doc.paragraphs])
+        else:
+            return ""
+    except Exception as e:
+        st.error(f"Error reading file: {str(e)}")
+        return ""
+
+
+def test_regex_on_file(regex_pattern: str, file_content: str) -> list:
+    """Test regex pattern on file content and return all matches with context"""
+    matches = test_regex(regex_pattern, file_content)
+    
+    # For each match, get surrounding context (50 chars before and after)
+    detailed_matches = []
+    for match in matches:
+        start = max(0, match.start() - 50)
+        end = min(len(file_content), match.end() + 50)
+        context = file_content[start:end]
+        
+        # Add ... if we truncated the context
+        prefix = "..." if start > 0 else ""
+        suffix = "..." if end < len(file_content) else ""
+        
+        detailed_matches.append({
+            "match": match.group(),
+            "start": match.start(),
+            "end": match.end(),
+            "context": f"{prefix}{context}{suffix}"
+        })
+    
+    return detailed_matches

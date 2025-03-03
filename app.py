@@ -1,6 +1,6 @@
 import streamlit as st
 from PIL import Image
-from utils.utils import generate_answer, generate_base_prompt, get_azure_client, generate_explanation, test_regex, markdown_test_results
+from utils.utils import generate_answer, generate_base_prompt, get_azure_client, generate_explanation, test_regex, markdown_test_results, read_file_content, test_regex_on_file
 from streamlit_extras.colored_header import colored_header
 
 # Set OpenAI API key
@@ -185,16 +185,18 @@ def main():
                 description="",
                 color_name="violet-70")
             
-            st.write("Enter an example sentence to test the regex")
-            col_test_text, col_test_button = st.columns([1, 0.2])
-            with col_test_text:
-                st.session_state.test_text = st.text_input("Enter an example sentence to test the regex", 
+            test_tabs = st.tabs(["Test with Text", "Test with File"])
+            
+            with test_tabs[0]:
+                st.write("Enter an example sentence to test the regex")
+                col_test_text, col_test_button = st.columns([1, 0.2])
+                with col_test_text:
+                    st.session_state.test_text = st.text_input("Enter an example sentence to test the regex", 
                                                             label_visibility="collapsed",
                                                             value=st.session_state.test_text)
-            with col_test_button:
-                if st.button("Run Test", type="primary"):
-                    st.session_state.show_test_results = True
-            
+                with col_test_button:
+                    if st.button("Run Test", type="primary"):
+                        st.session_state.show_test_results = True
             
             # Show test results if button was clicked
             if st.session_state.show_test_results and st.session_state.test_text:
@@ -202,6 +204,29 @@ def main():
                     test_regex(st.session_state.result_regex, st.session_state.test_text)
                 )
                 st.markdown(markdown_result)
+            
+            with test_tabs[1]:
+                st.write("Upload a file to test the regex")
+                uploaded_file = st.file_uploader(
+                    "Choose a file",
+                    type=["txt", "docx"],
+                    label_visibility="collapsed"
+                )
+                
+                if uploaded_file and st.session_state.result_regex:
+                    file_content = read_file_content(uploaded_file)
+                    if file_content:
+                        matches = test_regex_on_file(st.session_state.result_regex, file_content)
+                        
+                        if matches:
+                            st.write(f"Found {len(matches)} matches:")
+                            for idx, match in enumerate(matches, 1):
+                                with st.expander(f"Match {idx}: {match['match']}", expanded=False):
+                                    st.write("**Context:**")
+                                    st.write(match['context'])
+                                    st.write(f"**Position:** {match['start']} to {match['end']}")
+                        else:
+                            st.write("No matches found in the file.")
 
 
 # Run the app
