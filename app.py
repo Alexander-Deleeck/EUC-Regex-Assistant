@@ -23,8 +23,6 @@ def init_session_state():
         st.session_state.pattern_examples = [('', '')]
     if 'pattern_not_examples' not in st.session_state:
         st.session_state.pattern_not_examples = [('', '')]
-    if 'pattern_example_sentences' not in st.session_state:
-        st.session_state.pattern_example_sentences = ''
     if 'find_regex' not in st.session_state:
         st.session_state.find_regex = ''
     if 'replace_regex' not in st.session_state:
@@ -88,17 +86,11 @@ def main():
             placeholder="Eg. Replace 'one' with '1' followed by non-breaking space"
         )
         
-        # Examples sections (note: now the first parameter is the session state key)
+        # Examples sections
         pattern_examples = create_input_section('pattern_examples', "Match Example", "✔️")
         st.divider()
         pattern_not_examples = create_input_section('pattern_not_examples', "Not Match Example", "❌")
         st.divider()
-        
-        # Example sentence
-        pattern_example_sentences = st.text_input(
-            "Example sentence containing matches and non-matches:",
-            value=st.session_state.pattern_example_sentences
-        )
         
         # Regex options
         col1, col2 = st.columns(2)
@@ -116,7 +108,6 @@ def main():
                 pattern_description,
                 pattern_examples,
                 pattern_not_examples,
-                pattern_example_sentences,
                 prefix,
                 suffix,
                 case_sensitive,

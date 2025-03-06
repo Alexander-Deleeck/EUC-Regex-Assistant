@@ -1,0 +1,7 @@
+The space between the digit and celcius character is a normal space, which is allowed.
+some text 5 celcius is okay
+some text text 7 ℃ is okay
+text 9 ℃ is not okay
+
+
+
