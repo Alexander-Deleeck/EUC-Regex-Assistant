@@ -4,8 +4,27 @@ import streamlit as st
 import regex  # Add this at the top of the file, alongside other imports
 import docx
 import io
+import re
 
-
+# Add to top of app.py
+def check_auth():
+    """Check if user is logged in, else show login form"""
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+        
+    if not st.session_state.logged_in:
+        st.title("Login")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        
+        if st.button("Login"):
+            if (username == st.secrets.auth.username and 
+                password == st.secrets.auth.password):
+                st.session_state.logged_in = True
+                st.rerun()
+            else:
+                st.error("Invalid credentials")
+        st.stop()
 
 def get_azure_client() -> AzureOpenAI:
     """Initialize Azure OpenAI client"""
@@ -199,3 +218,35 @@ def test_regex_on_file(regex_pattern: str, file_content: str) -> list:
         })
     
     return detailed_matches
+
+def generate_refinement_prompt(base_prompt: str, current_find: str, current_replace: str, feedback: str) -> List[Dict]:
+    """Generate messages array for regex refinement"""
+    return [
+        {
+            "role": "system",
+            "content": f"""You are a regex refinement assistant. Help improve this regex based on user feedback.
+
+Original Requirements:
+{base_prompt}
+
+Current Regex:
+Find: {current_find}
+Replace: {current_replace}
+
+User Feedback:
+{feedback}
+
+Generate an improved regex. Return ONLY the new find and replace patterns separated by '|||'. No explanations or formatting."""
+        },
+        {"role": "user", "content": feedback}
+    ]
+
+
+def parse_refinement_response(response: str) -> Tuple[str, str]:
+    """Parse LLM response for refined regex patterns"""
+    pattern = re.compile(r'^(.*?)\|\|\|(.*)$', re.DOTALL)
+    match = pattern.match(response.strip())
+    
+    if match:
+        return match.group(1).strip(), match.group(2).strip()
+    return response.strip(), ''
