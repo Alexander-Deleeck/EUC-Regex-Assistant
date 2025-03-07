@@ -5,7 +5,16 @@ import regex  # Add this at the top of the file, alongside other imports
 import docx
 import io
 import re
+from streamlit_extras.colored_header import colored_header
 
+def app_header():
+    with st.container():
+        
+        logo_col, title_col = st.columns([2, 20])
+        logo_col.image(image='./logo/sparkle-orange-icon.png', width=60)
+        with title_col:
+            colored_header(label="REGEX-GENERATOR", color_name="blue-70", description=' ')
+            
 # Add to top of app.py
 def check_auth():
     """Check if user is logged in, else show login form"""
