@@ -106,7 +106,7 @@ def generate_answer(prompt: str, client: AzureOpenAI) -> str:
 def substitute_regex(find: str, replace: str, text: str) -> str:
     print(f"\nAttempting regex substitution with pattern: {find}")
     try:
-        result = regex.sub(find, replace, text)
+        result = regex.sub(pattern=find, repl=replace.replace('$', '\\'), string=text)
         print(f"Substitution successful. Sample result: {result[:100]}")
         return result
     except Exception as e:

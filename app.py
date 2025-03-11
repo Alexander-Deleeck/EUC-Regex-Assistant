@@ -101,7 +101,7 @@ def render_refinement_section():
         
         col1, col2 = st.columns([1, 10])
         with col1:
-            if st.button("Send", use_container_width=True):
+            if st.button("➤", use_container_width=True):
                 handle_refinement_input(user_input)
                 #user_input.clear()
         with col2:
@@ -239,7 +239,7 @@ def main():
         ):
         # st.markdown('<div class="my-bg">This column has a custom background color</div>', unsafe_allow_html=True)
         # Results Section
-            with st.container(height=300):
+            with st.container(height=800):
                 
                 colored_header(label="Results", color_name="red-70", description=' ')
                 if st.session_state.find_regex:
