@@ -80,8 +80,8 @@ OPTIONS:
 - Start of paragraph: {start_para}
 - End of paragraph: {end_para}
 
-Provide the find regex and replace pattern separated by '|||'. Use lookbehind/ahead for prefix/suffix if needed.
-Return EXACTLY the find and replace patterns separated by '|||' and do NOT include any other text or characters like `
+Provide the find regex and replace pattern in .NET regex format separated by '|||'. Use lookbehind/ahead for prefix/suffix if needed.
+Return EXACTLY the find and replace patterns in .NET regex format separated by '|||' and do NOT include any other text or characters like `
 """
     
     
@@ -91,7 +91,7 @@ def generate_answer(prompt: str, client: AzureOpenAI) -> str:
         response = client.chat.completions.create(
             model=st.secrets["AZURE"]["AZURE_OPENAI_DEPLOYMENT_NAME"],
             messages=[
-                {"role": "system", "content": "You are a regex expert. Return EXACTLY the find and replace patterns separated by '|||' and do NOT include any other text or characters like `"},
+                {"role": "system", "content": "You are a regex expert. Return EXACTLY the find and replace patterns in .NET regex format separated by '|||' and do NOT include any other text or characters like `"},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3
@@ -135,7 +135,7 @@ def generate_explanation(base_prompt: str, answer: str, client: AzureOpenAI):# -
                     "content": "Showcase the solution and briefly explain the solution to me. Enclose any formulas in ```formula```.",
                 },
             ],
-            temperature=0.5,
+            temperature=0.3,
             max_tokens=800,
             top_p=1
         )
@@ -245,7 +245,7 @@ Replace: {current_replace}
 User Feedback:
 {feedback}
 
-Generate an improved regex. Return ONLY the new find and replace patterns separated by '|||'. No explanations or formatting."""
+Generate an improved regex in .NET format. Return ONLY the new find and replace patterns separated by '|||'. No explanations or formatting."""
         },
         {"role": "user", "content": feedback}
     ]
