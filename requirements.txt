@@ -1,5 +1,6 @@
-openai==1.59.9
-Pillow==11.1.0
+openai==1.65.5
+python_docx==1.1.0
 regex==2024.9.11
 streamlit==1.41.1
-streamlit_extras==0.5.0
+streamlit_extras==0.5.5
+streamlit_shadcn_ui==0.1.18
