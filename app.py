@@ -239,9 +239,9 @@ def main():
         ):
         # st.markdown('<div class="my-bg">This column has a custom background color</div>', unsafe_allow_html=True)
         # Results Section
-            with st.container(height=800):
+            with st.container(height=400):
                 
-                colored_header(label="Results", color_name="red-70", description=' ')
+                st.subheader(body=":red[Results]")#, color_name="red-70", description=' ')
                 if st.session_state.find_regex:
                     st.subheader("Find Pattern")
                     edited_find = st.text_input("Edit find pattern", value=st.session_state.find_regex)
@@ -270,12 +270,12 @@ def main():
                         
                         if find and test_text:
                             matches = test_regex(find, test_text)
-                            substituted = substitute_regex(find, replace, test_text)
+                            substituted = substitute_regex(find, replace.replace('$', '\\'), test_text)
                             
                             st.subheader("Matches")
-                            st.markdown(markdown_test_results(matches))
+                            st.markdown(markdown_test_results(matches), unsafe_allow_html=True)
                             st.subheader("Substituted Text")
-                            st.code(substituted)
+                            st.code(substituted, language='text')
                 
                 with test_tabs[1]:
                     st.markdown("""

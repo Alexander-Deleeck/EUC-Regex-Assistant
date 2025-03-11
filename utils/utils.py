@@ -55,23 +55,26 @@ def unpack_example(examples: List[Tuple[str, str]]) -> str:
     return "\n".join([f"Example:{example[0]}\nDescription: {example[1]}\n\n" for example in examples])
 
 
+
 def generate_base_prompt(description: str, examples: List[Tuple[str, str]], not_examples: List[Tuple[str, str]], 
                         prefix: str, suffix: str, case_sensitive: bool, 
                         start_para: bool, end_para: bool) -> str:
-    def unpack(examples):
-        return '\n'.join([f"Ex: {ex[0]}\nDesc: {ex[1]}" for ex in examples])
+    def unpack(examples, type:str):
+        if not examples:
+            return f'\n'
+        else:
+            unpacked_examples = f"{type} EXAMPLES:\n" + '\n'.join([f"Ex: {ex[0]}\nDesc: {ex[1]}" for ex in examples])
+        return unpacked_examples
     
     return f"""
-Create a regex find and replace pattern with these requirements:
-
 DESCRIPTION:
 {description}
 
-MATCH EXAMPLES:
-{unpack(examples)}
 
-DO NOT MATCH:
-{unpack(not_examples)}
+{unpack(examples, 'MATCH')}
+
+
+{unpack(not_examples, 'DO NOT MATCH')}
 
 OPTIONS:
 - Prefix: {prefix or 'None'}
@@ -80,9 +83,7 @@ OPTIONS:
 - Start of paragraph: {start_para}
 - End of paragraph: {end_para}
 
-Provide the find regex and replace pattern in .NET regex format separated by '|||'. Use lookbehind/ahead for prefix/suffix if needed.
-Return EXACTLY the find and replace patterns in .NET regex format separated by '|||' and do NOT include any other text or characters like `
-"""
+""".replace('\n\n\n\n', '\n\n').replace('\n\n\n', '\n\n')
     
     
 def generate_answer(prompt: str, client: AzureOpenAI) -> str:
@@ -91,8 +92,8 @@ def generate_answer(prompt: str, client: AzureOpenAI) -> str:
         response = client.chat.completions.create(
             model=st.secrets["AZURE"]["AZURE_OPENAI_DEPLOYMENT_NAME"],
             messages=[
-                {"role": "system", "content": "You are a regex expert. Return EXACTLY the find and replace patterns in .NET regex format separated by '|||' and do NOT include any other text or characters like `"},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": "You are a regex expert. Return EXACTLY the find_pattern and replace_pattern in Python regex format separated by '|||' and do NOT include any other text or characters like `"},
+                {"role": "user", "content": f"""{prompt}\n\nATTENTION: Provide the Python regex `find_pattern` and `replace_pattern`, formatted by separating them with '|||', (so for example: `find_pattern|||replace_pattern`) and do NOT include any other text or characters like backticks, quotes, etc."""}
             ],
             temperature=0.3
         )
@@ -106,7 +107,7 @@ def generate_answer(prompt: str, client: AzureOpenAI) -> str:
 def substitute_regex(find: str, replace: str, text: str) -> str:
     print(f"\nAttempting regex substitution with pattern: {find}")
     try:
-        result = regex.sub(pattern=find, repl=replace.replace('$', '\\'), string=text)
+        result = regex.sub(pattern=find, repl=replace, string=text)
         print(f"Substitution successful. Sample result: {result[:100]}")
         return result
     except Exception as e:
@@ -128,7 +129,7 @@ def generate_explanation(base_prompt: str, answer: str, client: AzureOpenAI):# -
             messages=[
                 {
                     "role": "system",
-                    "content": f"You are an expert in Regular Expressions. Here is my situation,\n{base_prompt}. The solution I got from you was:\n{answer}.",
+                    "content": f"You are an expert in Python Regular Expressions. Here is my situation,\n{base_prompt}. The solution I got from you was:\n{answer}.",
                 },
                 {
                     "role": "user",
@@ -136,8 +137,7 @@ def generate_explanation(base_prompt: str, answer: str, client: AzureOpenAI):# -
                 },
             ],
             temperature=0.3,
-            max_tokens=800,
-            top_p=1
+            max_tokens=1200,
         )
         print(f"Explanation generated successfully: {explanation.choices[0].message.content[:100]}")
         return explanation.choices[0].message.content
@@ -166,14 +166,14 @@ def markdown_test_results(test_results: list) -> str:
     if not test_results:
         return "*No matches found or invalid regex pattern*"
     
-    markdown_results = ""
-    for idx, match in enumerate(test_results):
-        markdown_results += f"""    **Match {idx+1}:**    {match.group()}
-Start position: {match.start()}
-End position: {match.end()}
-
-
-"""
+    # Create table header first
+    markdown_results = "| Index | Match | Start | End |\n| --- | --- | --- | --- |\n"
+    
+    # Add each match as a table row
+    markdown_results += "".join(
+        f"| {idx+1} | {match.group()} | {match.start()} | {match.end()} |\n"
+        for idx, match in enumerate(test_results)
+    )
     return markdown_results
 
 def read_file_content(uploaded_file) -> str:
@@ -245,7 +245,7 @@ Replace: {current_replace}
 User Feedback:
 {feedback}
 
-Generate an improved regex in .NET format. Return ONLY the new find and replace patterns separated by '|||'. No explanations or formatting."""
+Generate an improved regex in Python format. Return ONLY the new find_pattern and replace_pattern separated by '|||'. No explanations or formatting."""
         },
         {"role": "user", "content": feedback}
     ]
